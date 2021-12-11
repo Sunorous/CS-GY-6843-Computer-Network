@@ -4,6 +4,7 @@ import sys
 import struct
 import time
 import select
+import statistics
 import binascii
 # Should use stdev
 
@@ -33,6 +34,7 @@ def checksum(string):
     return answer
 
 def receiveOnePing(mySocket, ID, timeout, destAddr):
+
     timeLeft = timeout
 
     while 1:
@@ -47,10 +49,10 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
 
         type, code, checksum, id, sequence = struct.unpack('bbHHh', recPacket[20:28])
 
+
         if type != 8 and id == ID:
-            bytesInDouble = struct.calcsize("d")
-            timeSent = struct.unpack("d", recPacket[28:28 + bytesInDouble])[0]
-            return timeReceived - timeSent
+            timeSent = struct.unpack("d", recPacket[28:28 + struct.calcsize("d")])[0]
+            return (timeReceived - timeSent) * 1000
 
         timeLeft = timeLeft - howLongInSelect
         if timeLeft <= 0:
@@ -105,14 +107,23 @@ def ping(host, timeout=1):
     dest = gethostbyname(host)
     print("Pinging " + dest + " using Python:")
     print("")
-    # Calculate vars values and return them
-    #  vars = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(stdev(stdev_var), 2))]
+
+    delaylist = []
+
     # Send ping requests to a server separated by approximately one second
     for i in range(0,4):
         delay = doOnePing(dest, timeout)
         print(delay)
+        delaylist.append(delay)
         time.sleep(1)  # one second
 
+    packet_min = min(delaylist)
+    packet_max = max(delaylist)
+    packet_avg = statistics.mean(delaylist)
+    stdev_var = statistics.stdev(delaylist)
+
+    vars = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),
+            str(round(stdev_var, 2))]
     return vars
 
 if __name__ == '__main__':
