@@ -91,8 +91,7 @@ def get_route(hostname):
 
             else:
                 hostAddr = str(socket.inet_ntoa(recvPacket[12:16]))
-                recPacket, addr = mySocket.recvfrom(1024)
-                types, code, checksum, id, sequence = struct.unpack('bbHHh', recPacket[20:28])
+                types, code, checksum, id, sequence = struct.unpack('bbHHh', recvPacket[20:28])
 
                 try: #try to fetch the hostname
                     hostname = gethostbyaddr(hostAddr)
